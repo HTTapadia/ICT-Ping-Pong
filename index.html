@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pong Game</title>
+    <h1 id="we" class="robotic-font">Made by Harshith, Aarush, Tejas, Shaurya for ICT Hackathon 2024<h1>
+    <style>
+        canvas {
+            display: block;
+            margin: 0 auto;
+            background: white;
+        }
+        .menu, .end-screen {
+            text-align: center;
+            margin-top: 100px;
+        }
+        .menu button, .end-screen button {
+            padding: 15px 30px;
+            font-size: 20px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<audio controls id="music">
+    <source src="Super Mario Bros. medley.mp3">
+    </audio>
+<body>
+
+
+<!-- Start Menu -->
+<div class="menu">
+    <h1 id="game" class="robotic-font">Pong Game</h1>
+    <button id="startGameButton" onclick="play()" class="robotic-font">Start Game</button>
+    <p id="para" class="robotic-font">Rules of the game - You can only play this game if you have taken the double or nothing challenge. Use the arrows on the keyboard to control you paddle. First to 7 points wins!</p>
+</div>
+
+<script>
+
+    var myMusic = document.getElementById("music");
+    function play() {
+        myMusic.play();
+    }
+</script>
+
+<!-- End Screen -->
+<div class="end-screen" style="display: none;">
+    <h1 class="robotic-font" id="endMessage">Game Over</h1>
+    <button id="restartGameButton" class="robotic-font">Play Again</button>
+</div>
+
+<!-- Game Canvas -->
+<canvas id="pongCanvas" width="1000" height="450" style="display: none;"></canvas>
+
+<script>
+        const link = document.createElement('link');
+    link.href = 'https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap';
+    link.rel = 'stylesheet';
+    document.head.appendChild(link);
+
+    document.querySelectorAll('.robotic-font').forEach(element => {
+      element.style.fontFamily = "'Roboto Mono', monospace";
+    });
+    const canvas = document.getElementById("pongCanvas");
+    const ctx = canvas.getContext("2d");
+
+    const startGameButton = document.getElementById("startGameButton");
+    const restartGameButton = document.getElementById("restartGameButton");
+    const menu = document.querySelector(".menu");
+    const endScreen = document.querySelector(".end-screen");
+    const endMessage = document.getElementById("endMessage");
+
+    const ballImg = new Image();
+    ballImg.src='Official_portrait_of_Barack_Obama';
+
+
+    const paddleWidth = 10, paddleHeight = 100, ballRadius = 10;
+    let ballX = canvas.width / 2, ballY = canvas.height / 2;
+    let ballSpeedX = 10, ballSpeedY = 10;
+
+
+    let paddle1Y = (canvas.height - paddleHeight) / 2;
+    let paddle2Y = (canvas.height - paddleHeight) / 2;
+    const paddleSpeed = 10;
+
+ 
+    let player1Score = 0, player2Score = 0;
+    const winningScore = 7;
+
+ 
+    let upArrowPressed = false, downArrowPressed = false;
+
+    function drawRect(x, y, width, height, color) {
+        ctx.fillStyle = color;
+        ctx.fillRect(x, y, width, height);
+    }
+
+    function drawCircle(x, y, radius, color) {
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    function drawText(text, x, y, color) {
+        ctx.fillStyle = color;
+        ctx.font = "35px PixelifySans";
+        ctx.fillText(text, x, y);
+    }
+
+
+    function render() {
+
+        drawRect(0, 0, canvas.width, canvas.height, "#000");
+
+        
+   
+        drawRect(0, paddle1Y, paddleWidth, paddleHeight, "#FFF"); // Player 1 paddle (left)
+        drawRect(canvas.width - paddleWidth, paddle2Y, paddleWidth, paddleHeight, "#FFF"); // Player 2 paddle (right)
+
+        drawCircle(ballX, ballY, ballRadius, "#FFF");
+
+
+        drawText(player1Score, canvas.width / 4, 50, "#FFF");
+        drawText(player2Score, (3 * canvas.width) / 4, 50, "#FFF");
+    }
+
+
+    function update() {
+        ballX += ballSpeedX;
+        ballY += ballSpeedY;
+
+
+        if (ballY - ballRadius < 0 || ballY + ballRadius > canvas.height) {
+            ballSpeedY = -ballSpeedY;
+        }
+
+
+        if (ballX - ballRadius < paddleWidth) { // Left paddle (AI)
+            if (ballY > paddle1Y && ballY < paddle1Y + paddleHeight) {
+                ballSpeedX = -ballSpeedX;
+            } else {
+                player2Score++;
+                resetBall();
+            }
+        }
+        if (ballX + ballRadius > canvas.width - paddleWidth) { // Right paddle (Player 2)
+            if (ballY > paddle2Y && ballY < paddle2Y + paddleHeight) {
+                ballSpeedX = -ballSpeedX;
+            } else {
+                player1Score++;
+                resetBall();
+            }
+        }
+
+
+        if (upArrowPressed && paddle2Y > 0) {
+            paddle2Y -= paddleSpeed;
+        } else if (downArrowPressed && paddle2Y < canvas.height - paddleHeight) {
+            paddle2Y += paddleSpeed;
+        }
+
+        let aiSpeed = 5; // Slower speed for AI paddle movement
+        if (paddle1Y + paddleHeight / 2 < ballY - 35) { // AI moves down if the ball is below
+            paddle1Y += aiSpeed;
+        } else if (paddle1Y + paddleHeight / 2 > ballY + 35) { // AI moves up if the ball is above
+            paddle1Y -= aiSpeed;
+        }
+
+
+        if (player1Score === winningScore || player2Score === winningScore) {
+            endGame();
+        }
+    }
+
+
+    function resetBall() {
+        ballX = canvas.width / 2;
+        ballY = canvas.height / 2;
+        ballSpeedX = -ballSpeedX;
+    }
+
+
+    function gameLoop() {
+        render();
+        update();
+    }
+
+
+    function endGame() {
+        clearInterval(gameInterval);
+        canvas.style.display = "none"; // Hide game canvas
+        endScreen.style.display = "block"; // Show end screen
+
+
+        if (player1Score === winningScore) {
+            endMessage.innerText = "AI Wins :( ";
+        } else if (player2Score === winningScore) {
+            endMessage.innerText = "You Win!";
+        }
+
+
+        player1Score = 0;
+        player2Score = 0;
+
+        function play(){
+            myMusic.pause();
+        }
+        
+    }
+
+
+    window.addEventListener("keydown", function(event) {
+        if (event.key === "ArrowUp") {
+            upArrowPressed = true;
+        }
+        if (event.key === "ArrowDown") {
+            downArrowPressed = true;
+        }
+    });
+
+    window.addEventListener("keyup", function(event) {
+        if (event.key === "ArrowUp") {
+            upArrowPressed = false;
+        }
+        if (event.key === "ArrowDown") {
+            downArrowPressed = false;
+        }
+    });
+
+    let gameInterval;
+
+
+    startGameButton.addEventListener("click", function() {
+        menu.style.display = "none"; // Hide menu
+        canvas.style.display = "block"; // Show game canvas
+        gameInterval = setInterval(gameLoop, 1000 / 60); // Start game loop
+    });
+
+
+    restartGameButton.addEventListener("click", function() {
+        endScreen.style.display = "none"; // Hide end screen
+        canvas.style.display = "block"; // Show game canvas
+        gameInterval = setInterval(gameLoop, 1000 / 60); // Start game loop again
+    });
+</script>
+
+</body>
+</html>
+
+<style>
+    body{
+        background: url("844946240_preview_eb5b511c833f84c1e6335ccca1a6d587f9593d58.jpg")
+    }
+    #we{
+        color:white;
+        text-align: center;
+        padding-top: 1px;
+    }
+
+    #endMessage {
+        color:white;
+    }
+
+    #game {
+        color:white;
+        font-size:100px;
+    }
+
+    #para {
+        color:white;
+        float:right;
+        text-wrap: wrap;
+    }
+
+    #music {
+        visibility: hidden;
+    }
+
+    #startGameButton {
+        border-radius: 20px;
+        border-width: 5px;
+        border-style: dashed;
+        border-color: grey;
+    }
+</style>
